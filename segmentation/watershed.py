@@ -8,17 +8,17 @@ from skimage.morphology import square, erosion
 
 
 class Watershed:
-    def __init__(self, image, seuil=10, expand_rate=8):
+    def __init__(self, image):
         self.image = image
         self.grad = np.abs(filters.sobel(self.image))
-        self._seuilling(seuil)
         self.labels = None
         self.foreground = None
         self.time = None
         self.dice = None
-        self.expand_size = int((image.size ** 0.5) * expand_rate / 100)
 
-    def segmentation(self):
+    def segmentation(self, seuil=0):
+        self.grad = np.abs(filters.sobel(self.image))
+        self._seuilling(seuil)
         t0 = time.time()
         image = self.grad
         len_x, len_y = np.shape(image)
@@ -185,7 +185,7 @@ class Watershed:
         u = np.round((u - m) / M * 255)
         self.grad = u * (u > seuil)
 
-    def find_fg(self, seed, fg=True):
+    def find_fg(self, seed, expand_rate=0, fg=True):
         u = self.labels.copy()
         fg_ind = np.where(seed[:, :, 2] == 255)
         # bg_ind = np.where(seed[:, :, 1] > seed[:, :, 2])
@@ -193,12 +193,13 @@ class Watershed:
             u[self.labels == self.labels[fg_ind[0][i], fg_ind[1][i]]] = -1
         u[u != -1] = 1
         self.labels = u
-        self._expand_labels()
+        self._expand_labels(expand_rate)
         if fg:
             self._fg_transform()
 
-    def _expand_labels(self):
-        self.labels = erosion(self.labels, square(self.expand_size))
+    def _expand_labels(self, rate):
+        expand_size = int((self.image.size ** 0.5) * rate / 100) + 1
+        self.labels = erosion(self.labels, square(expand_size))
 
     def _fg_transform(self):
         u = np.zeros((self.image.shape[0], self.image.shape[1], 3), dtype=int)
@@ -239,6 +240,7 @@ class Watershed:
                 res[labels == k, :] = color
         else:
             res = self.foreground
+        plt.figure(figsize=(15, 15))
         plt.subplot(121)
         plt.imshow(compare, cmap=cm)
         plt.title("Original image")
@@ -253,11 +255,20 @@ class Watershed:
         if self.labels is None:
             return self.image
         elif self.foreground is None:
-            return self.labels
+            rd_color = lambda: np.array(
+                [rd.randint(0, 255), rd.randint(0, 255), rd.randint(0, 255)]
+            )
+            labels = self.labels
+            nb_segments = int(labels.max() + 1)
+            res = np.zeros((labels.shape[0], labels.shape[1], 3), dtype=int)
+            for k in range(nb_segments):
+                color = rd_color()
+                res[labels == k, :] = color
+            return res
         return self.foreground
 
     def get_performances(self, truth, display=True):
         self._compute_dice(truth)
         print("Runtime: ", np.round(self.time, decimals=2), "s")
-        print("Dice   : ", np.round(self.dice, decimals=2))
+        print("Dice   : ", np.round(self.dice, decimals=2), "%")
         return self.time, self.dice
