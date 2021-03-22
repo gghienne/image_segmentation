@@ -187,9 +187,10 @@ class Watershed:
 
     def find_fg(self, seed, fg=True):
         u = self.labels.copy()
-        fg_ind = np.where(seed[:, :, 2] > seed[:, :, 0])
-        for p in fg_ind:
-            u[self.labels == self.labels[p[0], p[1]]] = -1
+        fg_ind = np.where(seed[:, :, 2] == 255)
+        # bg_ind = np.where(seed[:, :, 1] > seed[:, :, 2])
+        for i in range(len(fg_ind[0])):
+            u[self.labels == self.labels[fg_ind[0][i], fg_ind[1][i]]] = -1
         u[u != -1] = 1
         self.labels = u
         self._expand_labels()
@@ -204,7 +205,6 @@ class Watershed:
         for i in range(3):
             u[:, :, i] = self.image
         fg_ind = np.where(self.labels == -1)
-        print(len(fg_ind[0]))
         for i in range(len(fg_ind[0])):
             # print(fg_ind[0][i], fg_ind[1][i])
             u[fg_ind[0][i], fg_ind[1][i], :] = np.array([0, 0, 255])
