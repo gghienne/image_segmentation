@@ -187,7 +187,7 @@ class Watershed:
 
     def find_fg(self, seed, expand_rate=0, fg=True):
         u = self.labels.copy()
-        fg_ind = np.where(seed[:, :, 2] == 255)
+        fg_ind = np.where(seed[:, :, 2] > seed[:, :, 1] + 30)
         # bg_ind = np.where(seed[:, :, 1] > seed[:, :, 2])
         for i in range(len(fg_ind[0])):
             u[self.labels == self.labels[fg_ind[0][i], fg_ind[1][i]]] = -1
@@ -212,7 +212,7 @@ class Watershed:
         self.foreground = u
 
     def _compute_dice(self, truth):
-        A = truth[:, :, 0] == 255
+        A = truth[:, :, 0] > truth[:, :, 2] + 30
         B = self.foreground[:, :, 2] == 255
         TP = len(np.nonzero(A * B)[0])
         FN = len(np.nonzero(A * (~B))[0])
