@@ -1,5 +1,5 @@
 # Image segmentation (Topic#3)
-Python implementation for image segmentation using watershed and min-cut/max-flow algorithms
+Python implementation for image segmentation using watershed and min-cut/max-flow algorithms. You will find the associated pdf presentation in the repository's root.
 
 ## Min-cut/max-flow based algorithm (Groupe#2)
 This section was implemented by Hatim El Malik and Ilan Kleiman.
